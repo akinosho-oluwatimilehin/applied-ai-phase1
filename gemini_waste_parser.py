@@ -3,9 +3,11 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 import time
+import asyncio
 
 load_dotenv()
 client = genai.Client()
+async_client = client.aio
 
 customer_message = [
    "My bin has been misplaced, please attend to this soon.",
@@ -13,7 +15,14 @@ customer_message = [
    "Help me ehhhhhh"
 ]
 
-def parse_waste_request(customer_message):
+def validate_request(customer_message, request):
+    if request.issue_type == "damaged_bin" and "misplaced" in customer_message.lower():
+        return False
+
+    return True
+
+
+async def parse_waste_request(customer_message):
    prompt = f"""
       You are a customer attendant work with customer support for a waste management company.
       Your job is to extract relevant information from customer complaints.
@@ -35,9 +44,10 @@ def parse_waste_request(customer_message):
 
       customer_message = {customer_message}
    """
+
    for attempt in range(3):
       try:
-         response = client.models.generate_content(
+         response = await async_client.models.generate_content(
             model = "gemini-3.5-flash-lite",
             contents = prompt,
             config = types.GenerateContentConfig(
@@ -47,23 +57,32 @@ def parse_waste_request(customer_message):
          )
       
          validated_request = WasteRequest.model_validate_json(response.text)
-         return validated_request
+
+         if validate_request(customer_message, validated_request):
+            return validated_request
+
+         else:
+            print("Request failed semantic validation.")
+            return None
 
       
       except Exception as e:
          print("Attempt", attempt + 1, "failed:", e)
          if attempt < 2:
-            time.sleep(2)
+            await asyncio.sleep(2)
 
    print("Failed after 3 attempt.")    
    return None
 
 parsed_results = []
-for message in customer_message:
-   result = parse_waste_request(message)
+async def main(): 
+   results = await asyncio.gather(
+      *(parse_waste_request(message) for message in customer_message)
+   )
 
-   if result is not None:
-      parsed_results.append(result)
+   parsed_results = [result for result in results if result is not None]
 
-for result in parsed_results:
-   print(result.model_dump_json(indent = 4))
+   for result in parsed_results: 
+      print(result.model_dump_json (indent = 4))
+
+asyncio.run(main())
