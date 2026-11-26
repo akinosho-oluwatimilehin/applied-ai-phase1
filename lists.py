@@ -86,3 +86,29 @@ async def main():
       print(result.model_dump_json (indent = 4))
 
 asyncio.run(main())
+
+
+# from fastapi import FastAPI 
+# from pydantic import BaseModel
+# from gemini_waste_parser import parse_waste_request
+
+# app = FastAPI()
+
+# class Complaint(BaseModel):
+#     customer_message: str
+
+# @app.post("/complaints")
+# async def submit_complaint(complaint : Complaint):
+#     result = await parse_waste_request(complaint.customer_message)
+
+#     if result is not None:
+#         return result.model_dump()
+
+#     else:
+#         return {
+#             "message" : "Unable to process complaint."
+#         }
+
+# {
+#   "customer_message": "My bin hasn't been picked up even when it was scheduled to. The mess is almost attracting rodents, its disgusting. Why hasn't it been picked up???? Please do so soon. "
+# }

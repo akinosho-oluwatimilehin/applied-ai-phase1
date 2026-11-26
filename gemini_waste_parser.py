@@ -71,14 +71,15 @@ async def parse_waste_request(customer_message):
       print("Failed after 3 requests.")
       return None
 
-async def main():
-   results = await asyncio.gather(
-      *(parse_waste_request(message) for message in customer_message)
-   )
+if __name__ == "main":
+   async def main():
+      results = await asyncio.gather(
+         *(parse_waste_request(message) for message in customer_message)
+      )
 
-   parsed_results = [result for result in results if result is not None]
+      parsed_results = [result for result in results if result is not None]
 
-   for result in parsed_results:
-      print(result.model_dump_json(indent = 4))
+      for result in parsed_results:
+         print(result.model_dump_json(indent = 4))
 
-asyncio.run(main())
+   asyncio.run(main())
